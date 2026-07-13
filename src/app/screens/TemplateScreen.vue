@@ -10,7 +10,7 @@ import {
     ImagePlus,
     Zap,
     ChevronDown,
-} from "lucide-vue-next";
+} from "@lucide/vue";
 import ConfidencePill from "../components/ConfidencePill.vue";
 import { API_FIELDS, DETECTED_TEXTS } from "../data/constants";
 

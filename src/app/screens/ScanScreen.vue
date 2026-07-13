@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { ArrowLeft, Camera, SendIcon, CheckCircle2Icon, ScanLine } from "lucide-vue-next";
+import { ArrowLeft, Camera, SendIcon, CheckCircle2Icon, ScanLine } from "@lucide/vue";
 import ConfidencePill from "../components/ConfidencePill.vue";
 import { SCAN_DATA } from "../data/constants";
 

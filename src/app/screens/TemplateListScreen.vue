@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, TagIcon, Settings as SettingsIcon, ScanLine, PackageSearch, LayersIcon } from "lucide-vue-next";
+import { Plus, TagIcon, Settings as SettingsIcon, ScanLine, PackageSearch, LayersIcon } from "@lucide/vue";
 import { useRouter } from "vue-router";
 import { TEMPLATES } from "../data/constants";
 
