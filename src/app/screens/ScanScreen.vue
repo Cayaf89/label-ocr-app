@@ -1,22 +1,66 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { ArrowLeft, Camera, SendIcon, CheckCircle2Icon, ScanLine } from "@lucide/vue";
 import ConfidencePill from "../components/ConfidencePill.vue";
 import { SCAN_DATA } from "../data/constants";
+import { saveImage, startCamera, stopCamera, captureFrame } from "../../services/camera";
 
 const router = useRouter();
 
 const scanned = ref(false);
 const sent = ref(false);
 const scanning = ref(false);
+const cameraReady = ref(false); // true once the live preview is active.
+let stream: MediaStream | null = null;
 
-const handleScan = () => {
+// ---------------------------------------------------------------------------
+// Camera lifecycle — start on mount, stop on unmount.
+// Works on both desktop browsers and mobile devices via getUserMedia.
+// ---------------------------------------------------------------------------
+
+onMounted(async () => {
+    try {
+        const videoEl = document.getElementById("camera-video") as HTMLVideoElement | null;
+        if (videoEl) {
+            stream = await startCamera(videoEl);
+            cameraReady.value = true;
+        }
+    } catch {
+        // Camera permission denied or unavailable — fall back to placeholder UI.
+        console.warn("Camera not available");
+    }
+});
+
+onUnmounted(() => {
+    if (stream) {
+        stopCamera(stream);
+        stream = null;
+    }
+});
+
+// ---------------------------------------------------------------------------
+// Scan action — captures the current video frame and saves via Rust backend.
+// ---------------------------------------------------------------------------
+
+const handleScan = async () => {
+    const videoEl = document.getElementById("camera-video") as HTMLVideoElement | null;
+    if (!videoEl) return;
+
     scanning.value = true;
-    setTimeout(() => {
+
+    try {
+        // 1. Capture frame from live camera → base64 JPEG.
+        const base64Data = captureFrame(videoEl, 0.8);
+
+        // 2. Save image to disk via Rust backend (Tauri IPC).
+        await saveImage(base64Data);
+    } catch {
+        console.warn("Failed to save captured frame");
+    } finally {
         scanning.value = false;
         scanned.value = true;
-    }, 1400);
+    }
 };
 
 const handleBack = () => router.back();
@@ -49,11 +93,43 @@ const handleBack = () => router.back();
             <!-- Camera / scan zone -->
             <div class="px-4 pt-4 pb-2">
                 <div class="relative w-full rounded-sm overflow-hidden bg-[#111218]" style="height: 180px">
+                    <!-- Live camera preview -->
+                    <template v-if="cameraReady && !scanned">
+                        <video
+                            id="camera-video"
+                            autoplay
+                            playsinline
+                            muted
+                            class="w-full h-full object-cover"
+                        />
+                        <!-- Framing guide overlay -->
+                        <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                            <div class="relative w-48 h-32 border-2 border-white/40 rounded-sm">
+                                <div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary" />
+                                <div class="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-primary" />
+                                <div class="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-primary" />
+                                <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary" />
+                            </div>
+                        </div>
+                        <!-- Status chip -->
+                        <div
+                            class="absolute top-2 left-2 bg-black/60 text-white text-[9px] px-2 py-1 rounded-sm flex items-center gap-1"
+                        >
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Caméra active
+                        </div>
+                    </template>
+
+                    <!-- Scanned result -->
                     <template v-if="scanned">
-                        <img
-                            src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600&h=360&fit=crop&auto=format"
-                            alt="Étiquette scannée"
+                        <!-- The captured frame is shown as a static image overlay. -->
+                        <video
+                            id="camera-video"
+                            autoplay
+                            playsinline
+                            muted
                             class="w-full h-full object-cover opacity-80"
+                            style="display: none"
                         />
                         <div class="absolute inset-0">
                             <div
@@ -81,13 +157,23 @@ const handleBack = () => router.back();
                             reconnus
                         </div>
                     </template>
-                    <template v-else-if="scanning">
+
+                    <!-- Scanning animation (between capture and result) -->
+                    <template v-if="scanning">
+                        <video
+                            id="camera-video-scanning"
+                            autoplay
+                            playsinline
+                            muted
+                            class="w-full h-full object-cover opacity-40 blur-sm"
+                            style="display: none"
+                        />
                         <div class="w-full h-full flex flex-col items-center justify-center gap-3">
                             <div class="relative w-32 h-32 border-2 border-white/20 rounded-sm">
                                 <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary" />
                                 <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-primary" />
-                                <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-primary" />
-                                <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-primary" />
+                                <div class="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-primary" />
+                                <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary" />
                                 <div
                                     class="absolute left-0 right-0 h-0.5 bg-primary/80 scan-line"
                                     :style="{ top: '50%' }"
@@ -98,17 +184,19 @@ const handleBack = () => router.back();
                             </p>
                         </div>
                     </template>
-                    <template v-else>
+
+                    <!-- Fallback when no camera -->
+                    <template v-if="!cameraReady && !scanned">
                         <div class="w-full h-full flex flex-col items-center justify-center gap-3">
                             <div class="relative w-28 h-28 border border-white/20 rounded-sm">
                                 <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-white/50" />
                                 <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-white/50" />
-                                <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-white/50" />
-                                <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-white/50" />
+                                <div class="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-white/50" />
+                                <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-white/50" />
                                 <Camera :size="24" class="absolute inset-0 m-auto text-white/30" />
                             </div>
                             <p class="text-white/50 text-xs" :style="{ fontFamily: 'var(--font-mono)' }">
-                                Pointez vers une étiquette
+                                Caméra non disponible — utilisez le bouton ci-dessous pour capturer.
                             </p>
                         </div>
                     </template>
@@ -174,7 +262,7 @@ const handleBack = () => router.back();
                 <div class="bg-card border border-border rounded-sm p-4 flex flex-col items-center gap-2 text-center">
                     <ScanLine :size="20" class="text-muted-foreground" />
                     <p class="text-xs text-muted-foreground">
-                        Scannez une étiquette pour afficher les données extraites selon le template configuré.
+                        Pointez la caméra vers une étiquette, puis appuyez sur "Prendre une photo".
                     </p>
                 </div>
             </div>
