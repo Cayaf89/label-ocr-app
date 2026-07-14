@@ -1,45 +1,10 @@
 <script setup lang="ts">
 import { Plus, TagIcon, Settings as SettingsIcon, ScanLine, PackageSearch, LayersIcon } from "@lucide/vue";
-import { useRouter } from "vue-router";
 import { TEMPLATES } from "../data/constants";
-
-const router = useRouter();
-
-const handleConfigure = (id: number) => {
-    router.push(`/templates/${id}/configure`);
-};
-
-const handleScan = () => {
-    router.push("/scan");
-};
 </script>
 
 <template>
     <div class="flex flex-col h-full bg-background overflow-hidden">
-        <!-- App bar -->
-        <div class="bg-[#111218] px-4 pb-4 pt-2">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p
-                        class="text-[10px] text-white/50 tracking-widest uppercase"
-                        :style="{ fontFamily: 'var(--font-mono)' }"
-                    >
-                        OCR Mapper
-                    </p>
-                    <h1
-                        class="text-white text-base font-semibold leading-tight mt-0.5"
-                        :style="{ fontFamily: 'var(--font-sans)' }"
-                    >
-                        Mes templates
-                    </h1>
-                </div>
-                <button
-                    class="flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-medium px-3 py-1.5 rounded-sm"
-                >
-                    <Plus :size="12" /> Nouveau
-                </button>
-            </div>
-        </div>
         <!-- Stats strip -->
         <div class="bg-card border-b border-border px-4 py-2.5 flex items-center gap-6">
             <div class="flex items-center gap-1.5">
@@ -92,33 +57,34 @@ const handleScan = () => {
                             >
                         </div>
                         <div class="flex items-stretch border-l border-border divide-x divide-border">
-                            <button
-                                @click="handleConfigure(tpl.id)"
+                            <RouterLink
+                                :to="{ name: 'template-update', params: { id: tpl.id } }"
                                 class="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
                                 title="Configurer le template"
                             >
                                 <SettingsIcon :size="13" class="text-foreground" />
-                            </button>
-                            <button
-                                @click="handleScan"
+                            </RouterLink>
+                            <RouterLink
+                                :to="{ name: 'scan' }"
                                 class="flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors"
                                 :style="{ background: tpl.accent }"
                                 title="Scanner avec ce template"
                             >
                                 <ScanLine :size="13" class="text-white" />
-                            </button>
+                            </RouterLink>
                         </div>
                     </div>
                 </div>
             </div>
             <!-- Empty state -->
             <div class="px-4 pb-6">
-                <button
+                <RouterLink
+                    :to="{ name: 'template-new' }"
                     class="w-full border border-dashed border-border rounded-sm flex items-center justify-center gap-2 py-4 text-muted-foreground"
                 >
                     <Plus :size="14" />
                     <span class="text-xs font-medium">Créer un nouveau template</span>
-                </button>
+                </RouterLink>
             </div>
         </div>
     </div>

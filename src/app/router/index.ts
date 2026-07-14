@@ -5,7 +5,12 @@ import ScanScreen from "../screens/ScanScreen.vue";
 
 const routes = [
     { path: "/", name: "template-list", component: TemplateListScreen },
-    { path: "/templates/:id/configure", name: "template-configure", component: TemplateScreen },
+    {
+        path: "/templates/new",
+        name: "template-new",
+        component: TemplateScreen,
+    },
+    { path: "/templates/:id/configure", name: "template-update", component: TemplateScreen },
     { path: "/scan", name: "scan", component: ScanScreen },
 ];
 
