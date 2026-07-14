@@ -12,13 +12,43 @@ import ConfidencePill from "../components/ConfidencePill.vue";
 import EmojiPicker from "../components/EmojiPicker.vue";
 import { API_FIELDS, DETECTED_TEXTS, Template, TEMPLATES } from "../data/constants";
 import { useRoute } from "vue-router";
+import { fileToDataUrl } from "../../services/file.ts";
+
+// Rendered list: always the OCR-detected texts, enriched with parsed bbox coordinates.
+interface DisplayItem {
+    id: number;
+    text: string;
+    confidence: number;
+    x?: number;
+    y?: number;
+}
+
+interface OcrTextResult {
+    id: number;
+    text: string;
+    confidence: number;
+    bbox: string;
+}
 
 const route = useRoute();
 
-// Map from detected text id → selected apiField.
+const saved = ref(false);
+const template = ref<Template>({
+    id: 0,
+    name: "",
+    description: "",
+    labelPhoto: "",
+    icon: "",
+    fieldsCount: 0,
+    lastUsed: "",
+    color: "",
+    accent: "",
+    fields: [],
+});
 const mappings = ref<Record<number, string>>({});
-
-const hasImage = ref(true); // Default to true — a configured template implies a reference image exists.
+const detectedTexts = ref<OcrTextResult[]>([]);
+const hasImage = ref(false);
+const imageUrl = ref();
 
 function parseBbox(bbox: string): { x: number; y: number } | null {
     const m = bbox.match(/x:(\d+)\s*y:(\d+)/);
@@ -32,13 +62,16 @@ function findMatchingField(fieldX: number, fieldY: number, threshold = 15): Temp
     );
 }
 
+// Get the active list of detected texts (reactive OCR results, fallback to static data).
+const activeDetectedTexts = computed(() => (detectedTexts.value.length > 0 ? detectedTexts.value : DETECTED_TEXTS));
+
 // Reverse lookup: find a detected text that matches a given coordinate.
 function findMatchingDetectedText(
     fieldX: number,
     fieldY: number,
     threshold = 15,
-): (typeof DETECTED_TEXTS)[number] | undefined {
-    return DETECTED_TEXTS.find((t) => {
+): OcrTextResult | (typeof DETECTED_TEXTS)[number] | undefined {
+    return activeDetectedTexts.value.find((t) => {
         const p = parseBbox(t.bbox);
         return !!p && Math.abs(p.x - fieldX) <= threshold && Math.abs(p.y - fieldY) <= threshold;
     });
@@ -62,20 +95,6 @@ function getMatchedText(field: Template["fields"][number]): (typeof DETECTED_TEX
     return findMatchingDetectedText(field.x, field.y);
 }
 
-const saved = ref(false);
-const template = ref<Template>({
-    id: 0,
-    name: "",
-    description: "",
-    labelPhoto: "",
-    icon: "",
-    fieldsCount: 0,
-    lastUsed: "",
-    color: "",
-    accent: "",
-    fields: [],
-});
-
 onMounted(() => {
     const existing = TEMPLATES.find((tpl) => tpl.id == Number(route.params.id));
     if (existing) {
@@ -89,15 +108,6 @@ onMounted(() => {
         }
     }
 });
-
-// Rendered list: always the OCR-detected texts, enriched with parsed bbox coordinates.
-interface DisplayItem {
-    id: number;
-    text: string;
-    confidence: number;
-    x?: number;
-    y?: number;
-}
 
 const displayItems = computed<DisplayItem[]>(() =>
     DETECTED_TEXTS.map((t) => ({
@@ -113,6 +123,19 @@ const activeCount = computed(() => Object.values(mappings.value).filter((v) => v
 const handleSave = () => {
     saved.value = true;
     setTimeout(() => (saved.value = false), 2000);
+};
+
+const openImagePicker = () => {
+    document.getElementById("template-image")?.click();
+};
+
+const startOcr = async (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    if (!input.files?.length) return;
+
+    const image = input.files[0];
+    imageUrl.value = fileToDataUrl(image);
+    hasImage.value = true;
 };
 </script>
 
@@ -165,17 +188,15 @@ const handleSave = () => {
                 >
                     Étiquette de référence
                 </p>
-                <button
-                    @click="hasImage = !hasImage"
-                    class="w-full border-2 border-dashed border-border rounded-sm overflow-hidden transition-all"
-                    style="min-height: 140px"
+                <div
+                    class="w-full border-2 border-dashed border-border rounded-sm overflow-hidden transition-all min-h-36"
                 >
                     <template v-if="hasImage">
-                        <div class="relative w-full" style="height: 140px">
+                        <div class="relative w-full min-h-36">
                             <img
-                                src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600&h=280&fit=crop&auto=format"
+                                :src="imageUrl"
                                 alt="Étiquette produit laitier scannée"
-                                class="w-full h-full object-cover"
+                                class="w-full h-full object-contain"
                             />
                             <div class="absolute inset-0">
                                 <div
@@ -204,7 +225,11 @@ const handleSave = () => {
                         </div>
                     </template>
                     <template v-else>
-                        <div class="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
+                        <input class="hidden" type="file" id="template-image" @change="startOcr" />
+                        <button
+                            @click="openImagePicker"
+                            class="w-full flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground"
+                        >
                             <div class="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                                 <ImagePlus :size="18" class="text-muted-foreground" />
                             </div>
@@ -214,9 +239,9 @@ const handleSave = () => {
                                     L'OCR détectera automatiquement les textes
                                 </p>
                             </div>
-                        </div>
+                        </button>
                     </template>
-                </button>
+                </div>
             </div>
 
             <!-- Divider + section label -->

@@ -9,6 +9,17 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(() => ({
     plugins: [vue(), tailwindcss()],
 
+    // No special optimizeDeps needed — Vite handles CJS interop automatically.
+
+    build: {
+        commonjsOptions: {
+            include: [/tesseract\.js/, /node_modules/],
+        },
+        rollupOptions: {
+            external: ["worker_threads", /@scribe\.js\/canvas/, /\.node$/, /scribe\.js-ocr\/js\//],
+        },
+    },
+
     // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
     //
     // 1. prevent Vite from obscuring rust errors
@@ -28,6 +39,10 @@ export default defineConfig(() => ({
         watch: {
             // 3. tell Vite to ignore watching `src-tauri`
             ignored: ["**/src-tauri/**"],
+        },
+        headers: {
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Embedder-Policy": "require-corp",
         },
     },
 }));
