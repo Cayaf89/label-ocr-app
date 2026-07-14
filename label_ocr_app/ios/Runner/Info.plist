@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Cette application utilise la caméra pour photographier des étiquettes produits et extraire du texte via OCR.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Cette application a besoin d'accéder à la bibliothèque photo pour sauvegarder les captures d'étiquettes.</string>
 </dict>
 </plist>
