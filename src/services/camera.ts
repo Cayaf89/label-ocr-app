@@ -1,6 +1,6 @@
 /**
- * Camera service — handles live preview, frame capture, and image upload to Rust backend.
- * Works on both desktop (getUserMedia) and mobile browsers.
+ * Camera service — uses native mobile camera via HTML5 <input type="file" capture>.
+ * Works on all platforms (mobile + desktop) without any Rust plugin.
  */
 
 import { invoke } from "@tauri-apps/api/core";
@@ -12,7 +12,7 @@ export interface CaptureInfo {
 }
 
 // ---------------------------------------------------------------------------
-// Tauri IPC commands (defined in src-tauri/src/camera.rs)
+// Tauri IPC commands — defined in src-tauri/src/camera.rs
 // ---------------------------------------------------------------------------
 
 /** Save base64 image data to disk via Rust backend. */
@@ -31,66 +31,67 @@ export async function deleteCapture(filename: string): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
-// Live camera (browser getUserMedia)
+// Native mobile camera capture via HTML5 file input with `capture` attribute.
+// On Android, this opens the device's native camera app. On desktop, it opens a file picker.
 // ---------------------------------------------------------------------------
 
-/** Start a live camera stream on the given video element. */
-export async function startCamera(
-  videoEl: HTMLVideoElement,
-  facingMode: "user" | "environment" = "environment",
-): Promise<MediaStream> {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: {
-      facingMode,
-      width: { ideal: 1920 },
-      height: { ideal: 1080 },
-    },
-    audio: false,
-  });
-  videoEl.srcObject = stream;
-  await videoEl.play();
-  return stream;
-}
-
-/** Stop the active camera stream. */
-export function stopCamera(stream: MediaStream): void {
-  if (stream) {
-    stream.getTracks().forEach((t) => t.stop());
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Frame capture helpers
-// ---------------------------------------------------------------------------
-
-/** Capture a single frame from a video element to base64 JPEG string. */
-export function captureFrame(
-  videoEl: HTMLVideoElement,
-  quality = 0.75,
-): string {
-  const canvas = document.createElement("canvas");
-  canvas.width = videoEl.videoWidth;
-  canvas.height = videoEl.videoHeight;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(videoEl, 0, 0);
-  return canvas.toDataURL("image/jpeg", quality);
-}
-
-/** Capture to a Blob for direct upload without base64 encoding. */
-export function captureFrameBlob(
-  videoEl: HTMLVideoElement,
-  quality = 0.75,
-): Promise<Blob> {
-  const canvas = document.createElement("canvas");
-  canvas.width = videoEl.videoWidth;
-  canvas.height = videoEl.videoHeight;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(videoEl, 0, 0);
+/**
+ * Open a hidden <input type="file" accept="image/*" capture="environment">
+ * to trigger the native mobile camera on Android devices.
+ * Returns a Blob of the captured image, or null if cancelled.
+ */
+export function takeNativePhoto(): Promise<Blob | null> {
   return new Promise((resolve) => {
-    canvas.toBlob(
-      (blob) => resolve(blob!),
-      "image/jpeg",
-      quality,
-    );
+    const input = document.createElement("input");
+    input.type = "file";
+    // `capture="environment"` tells Android to open the rear camera directly.
+    input.capture = "environment";
+    input.accept = "image/*";
+    input.style.display = "none";
+    document.body.appendChild(input);
+
+    input.addEventListener("change", () => {
+      const file = input.files?.[0] ?? null;
+      resolve(file || null);
+      if (document.body.contains(input)) {
+        document.body.removeChild(input);
+      }
+    });
+
+    // Fallback timeout — if user doesn't pick within 60s.
+    setTimeout(() => {
+      if (document.body.contains(input)) {
+        input.value = "";
+        document.body.removeChild(input);
+      }
+      resolve(null);
+    }, 60_000);
+
+    input.click();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Convert a base64 string (with or without data URL prefix) to Uint8Array. */
+export function base64ToArrayBuffer(base64: string): Uint8Array {
+  const cleaned = base64.replace(/^data:image\/\w+;base64,/, "");
+  const byteString = atob(cleaned);
+  const bytes = new Uint8Array(byteString.length);
+  for (let i = 0; i < byteString.length; i++) {
+    bytes[i] = byteString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+/** Convert a Blob to base64 data URL string. */
+export function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
   });
 }
