@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, onMounted, ref } from "vue";
 import {
-    ArrowLeft,
-    Camera,
     Settings as SettingsIcon,
     CheckCircle2 as CheckCircle2Icon,
     ScanLine,
@@ -12,57 +9,115 @@ import {
     ChevronDown,
 } from "@lucide/vue";
 import ConfidencePill from "../components/ConfidencePill.vue";
-import { API_FIELDS, DETECTED_TEXTS } from "../data/constants";
+import EmojiPicker from "../components/EmojiPicker.vue";
+import { API_FIELDS, DETECTED_TEXTS, Template, TEMPLATES } from "../data/constants";
+import { useRoute } from "vue-router";
 
-const router = useRouter();
+const route = useRoute();
 
-const mappings = ref<Record<number, string>>(
-    Object.fromEntries(DETECTED_TEXTS.map((t) => [t.id, "-- Sélectionner --"])),
-);
-const hasImage = ref(false);
+// Map from detected text id → selected apiField.
+const mappings = ref<Record<number, string>>({});
+
+const hasImage = ref(true); // Default to true — a configured template implies a reference image exists.
+
+function parseBbox(bbox: string): { x: number; y: number } | null {
+    const m = bbox.match(/x:(\d+)\s*y:(\d+)/);
+    return m ? { x: Number(m[1]), y: Number(m[2]) } : null;
+}
+
+// Match a detected text to the closest template field by coordinate proximity.
+function findMatchingField(fieldX: number, fieldY: number, threshold = 15): Template["fields"][number] | undefined {
+    return template.value.fields.find(
+        (f) => Math.abs(f.x - fieldX) <= threshold && Math.abs(f.y - fieldY) <= threshold,
+    );
+}
+
+// Reverse lookup: find a detected text that matches a given coordinate.
+function findMatchingDetectedText(
+    fieldX: number,
+    fieldY: number,
+    threshold = 15,
+): (typeof DETECTED_TEXTS)[number] | undefined {
+    return DETECTED_TEXTS.find((t) => {
+        const p = parseBbox(t.bbox);
+        return !!p && Math.abs(p.x - fieldX) <= threshold && Math.abs(p.y - fieldY) <= threshold;
+    });
+}
+
+// Pre-populate mappings when editing an existing template: each detected text tries to snap to the matching field by coords.
+function populateMappingsFromFields() {
+    for (const t of DETECTED_TEXTS) {
+        const parsed = parseBbox(t.bbox);
+        if (!parsed) {
+            mappings.value[t.id] = "-- Sélectionner --";
+            continue;
+        }
+        const match = findMatchingField(parsed.x, parsed.y);
+        mappings.value[t.id] = match ? match.apiField : "-- Sélectionner --";
+    }
+}
+
+// Alias for use in the template.
+function getMatchedText(field: Template["fields"][number]): (typeof DETECTED_TEXTS)[number] | undefined {
+    return findMatchingDetectedText(field.x, field.y);
+}
+
 const saved = ref(false);
+const template = ref<Template>({
+    id: 0,
+    name: "",
+    description: "",
+    labelPhoto: "",
+    icon: "",
+    fieldsCount: 0,
+    lastUsed: "",
+    color: "",
+    accent: "",
+    fields: [],
+});
+
+onMounted(() => {
+    const existing = TEMPLATES.find((tpl) => tpl.id == Number(route.params.id));
+    if (existing) {
+        template.value = { ...existing };
+        // Match detected texts to fields by coordinate proximity.
+        populateMappingsFromFields();
+    } else {
+        // New template — start with no mappings so every row shows "-- Sélectionner --".
+        for (const t of DETECTED_TEXTS) {
+            mappings.value[t.id] = "-- Sélectionner --";
+        }
+    }
+});
+
+// Rendered list: always the OCR-detected texts, enriched with parsed bbox coordinates.
+interface DisplayItem {
+    id: number;
+    text: string;
+    confidence: number;
+    x?: number;
+    y?: number;
+}
+
+const displayItems = computed<DisplayItem[]>(() =>
+    DETECTED_TEXTS.map((t) => ({
+        id: t.id,
+        text: t.text,
+        confidence: t.confidence,
+        ...(parseBbox(t.bbox) ?? {}),
+    })),
+);
+
+const activeCount = computed(() => Object.values(mappings.value).filter((v) => v !== "-- Sélectionner --").length);
 
 const handleSave = () => {
     saved.value = true;
     setTimeout(() => (saved.value = false), 2000);
 };
-
-const handleBack = () => router.back();
-const handleNavigate = () => router.push("/scan");
 </script>
 
 <template>
     <div class="flex flex-col h-full bg-background overflow-hidden">
-        <!-- App bar -->
-        <div class="bg-[#111218] px-4 pb-4 pt-2">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <button @click="handleBack" class="text-white/60 p-1 -ml-1"><ArrowLeft :size="18" /></button>
-                    <div>
-                        <p
-                            class="text-[10px] text-white/50 tracking-widest uppercase"
-                            :style="{ fontFamily: 'var(--font-mono)' }"
-                        >
-                            OCR Mapper
-                        </p>
-                        <h1
-                            class="text-white text-base font-semibold leading-tight mt-0.5"
-                            :style="{ fontFamily: 'var(--font-sans)' }"
-                        >
-                            Configuration template
-                        </h1>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button
-                        @click="handleNavigate"
-                        class="flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-medium px-3 py-1.5 rounded-sm"
-                    >
-                        <Camera :size="12" /> Scanner
-                    </button>
-                </div>
-            </div>
-        </div>
         <!-- Scrollable content -->
         <div class="flex-1 overflow-y-auto" style="scrollbar-width: none">
             <!-- Title & description -->
@@ -71,23 +126,30 @@ const handleNavigate = () => router.push("/scan");
                     <label
                         class="text-[10px] text-muted-foreground font-medium tracking-widest uppercase block mb-1.5"
                         :style="{ fontFamily: 'var(--font-mono)' }"
-                        >Titre</label
                     >
-                    <input
-                        type="text"
-                        value="Produit laitier"
-                        class="w-full bg-card border border-border rounded-sm text-sm text-foreground px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
-                        style="font-family: var(--font-sans)"
-                    />
+                        Icône & Titre
+                    </label>
+                    <!-- Inline emoji picker + title -->
+                    <div class="flex items-center gap-2">
+                        <EmojiPicker v-model="template.icon" />
+                        <input
+                            type="text"
+                            v-model="template.name"
+                            placeholder="Nom de l'étiquette…"
+                            class="flex-1 bg-card border border-border rounded-sm text-sm text-foreground px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
+                            style="font-family: var(--font-sans)"
+                        />
+                    </div>
                 </div>
                 <div>
                     <label
                         class="text-[10px] text-muted-foreground font-medium tracking-widest uppercase block mb-1.5"
                         :style="{ fontFamily: 'var(--font-mono)' }"
-                        >Description</label
                     >
+                        Description
+                    </label>
                     <textarea
-                        value="Lait, yaourts, fromages"
+                        v-model="template.description"
                         rows="{2}"
                         class="w-full bg-card border border-border rounded-sm text-sm text-foreground px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground resize-none"
                         style="font-family: var(--font-sans)"
@@ -169,71 +231,81 @@ const handleNavigate = () => router.push("/scan");
                 <span
                     class="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm"
                     :style="{ fontFamily: 'var(--font-mono)' }"
-                    >{{ DETECTED_TEXTS.length }}</span
                 >
+                    {{ displayItems.length }}
+                </span>
             </div>
 
-            <!-- Mapping rows -->
+            <!-- Mapping rows: loop over template fields, each paired with its matched detected OCR text -->
             <div class="px-4 flex flex-col gap-2 pb-4">
-                <div
-                    v-for="item in DETECTED_TEXTS"
-                    :key="item.id"
-                    class="bg-card border border-border rounded-sm overflow-hidden"
-                >
-                    <div class="px-3 pt-2.5 pb-2 border-b border-border bg-muted/40">
-                        <div class="flex items-center justify-between mb-1">
-                            <span
-                                class="text-[9px] text-muted-foreground tracking-wider uppercase"
+                <template v-for="(field, idx) in template.fields" :key="idx">
+                    <div class="bg-card border border-border rounded-sm overflow-hidden">
+                        <div class="px-3 pt-2.5 pb-2 border-b border-border bg-muted/40">
+                            <div class="flex items-center justify-between mb-1">
+                                <span
+                                    class="text-[9px] text-muted-foreground tracking-wider uppercase"
+                                    :style="{ fontFamily: 'var(--font-mono)' }"
+                                >
+                                    Texte détecté
+                                </span>
+                                <ConfidencePill
+                                    v-if="getMatchedText(field)"
+                                    :value="getMatchedText(field)!.confidence"
+                                />
+                            </div>
+                            <template v-if="getMatchedText(field)">
+                                <div class="flex items-center gap-2">
+                                    <ScanLine :size="11" class="text-primary shrink-0" />
+                                    <span
+                                        class="text-xs text-foreground font-medium flex-1"
+                                        :style="{ fontFamily: 'var(--font-mono)' }"
+                                    >
+                                        {{ getMatchedText(field)!.text }}
+                                    </span>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <p class="text-[9px] text-muted-foreground italic mt-1">
+                                    Aucun texte détecté à cette position
+                                </p>
+                            </template>
+                            <p
+                                class="text-[9px] text-muted-foreground mt-1"
                                 :style="{ fontFamily: 'var(--font-mono)' }"
-                                >Texte détecté</span
                             >
-                            <ConfidencePill :value="item.confidence" />
+                                x : {{ field.x }} / y : {{ field.y }}
+                            </p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <ScanLine :size="11" class="text-primary shrink-0" />
+                        <div class="px-3 py-2">
                             <span
-                                class="text-xs text-foreground font-medium flex-1"
+                                class="text-[9px] text-muted-foreground tracking-wider uppercase block mb-1"
                                 :style="{ fontFamily: 'var(--font-mono)' }"
-                                >{{ item.text }}</span
                             >
-                        </div>
-                        <p class="text-[9px] text-muted-foreground mt-1" :style="{ fontFamily: 'var(--font-mono)' }">
-                            {{ item.bbox }}
-                        </p>
-                    </div>
-                    <div class="px-3 py-2">
-                        <span
-                            class="text-[9px] text-muted-foreground tracking-wider uppercase block mb-1"
-                            :style="{ fontFamily: 'var(--font-mono)' }"
-                            >Champ API</span
-                        >
-                        <div class="relative">
-                            <select
-                                :value="mappings[item.id]"
-                                @change="(e: Event) => (mappings[item.id] = (e.target as HTMLSelectElement).value)"
-                                class="w-full appearance-none bg-background border border-border rounded-sm text-xs px-2.5 py-1.5 pr-7 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                            >
-                                <option v-for="f in API_FIELDS" :key="f" :value="f">{{ f }}</option>
-                            </select>
-                            <ChevronDown
-                                :size="12"
-                                class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                            />
+                                Champ API
+                            </span>
+                            <div class="relative">
+                                <select
+                                    v-model="field.apiField"
+                                    class="w-full appearance-none bg-background border border-border rounded-sm text-xs px-2.5 py-1.5 pr-7 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                >
+                                    <option value="" disabled>-- Sélectionner --</option>
+                                    <option v-for="f in API_FIELDS" :key="f" :value="f">{{ f }}</option>
+                                </select>
+                                <ChevronDown
+                                    :size="12"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
+                </template>
             </div>
         </div>
 
         <!-- Bottom save bar -->
         <div class="bg-card border-t border-border px-4 py-3 flex items-center gap-3">
             <div class="flex-1">
-                <p class="text-[10px] text-muted-foreground">
-                    {{ Object.values(mappings).filter((v) => v !== "-- Sélectionner --").length }}/{{
-                        DETECTED_TEXTS.length
-                    }}
-                    champs liés
-                </p>
+                <p class="text-[10px] text-muted-foreground">{{ activeCount }}/{{ displayItems.length }} champs liés</p>
             </div>
             <button
                 @click="handleSave"
