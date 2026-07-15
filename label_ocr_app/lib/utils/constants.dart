@@ -34,5 +34,5 @@ const Map<String, List<Map<String, dynamic>>> sampleFieldMappings = {
 };
 
 const String appName = 'Label OCR Mapper';
-const double navbarHeight = 64.0;
+const double navbarHeight = 72.0;
 const double cameraZoneHeight = 180.0;

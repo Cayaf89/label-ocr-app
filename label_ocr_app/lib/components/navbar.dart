@@ -37,71 +37,75 @@ class Navbar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canPop = Navigator.of(context).canPop();
+    bool canPop;
+    try {
+      canPop = Navigator.of(context).canPop();
+    } catch (_) {
+      canPop = false;
+    }
     final shouldShowBack = showBackButton && canPop;
 
     return Container(
-      height: navbarHeight,
       color: const Color(0xFF111218),
       child: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            children: [
-              // ── Left side ────────────────────────────────────────
-              Expanded(
-                child: Row(
-                  children: [
-                    if (shouldShowBack) ...[
-                      GestureDetector(
-                        onTap: onBack ?? () => Navigator.of(context).pop(),
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: -4.0),
-                          child: Icon(
+        child: SizedBox(
+          height: navbarHeight,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: [
+                // ── Left side ────────────────────────────────────────
+                Flexible(
+                  child: Row(
+                    children: [
+                      if (shouldShowBack) ...[
+                        GestureDetector(
+                          onTap: onBack ?? () => Navigator.of(context).pop(),
+                          child: const Icon(
                             Icons.arrow_back,
-                            size: 18,
-                            color: Colors.white.withValues(alpha: 0.6),
+                            size: 32,
+                            color: Colors.white,
                           ),
+                        ),
+                      ],
+                      const SizedBox(width: 8),
+
+                      // Title block
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              subtitle,
+                              style: AppTypography.monoLabelSmall.copyWith(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                fontSize: 14,
+                                letterSpacing: 0.1 * kEm,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontFamily: AppTypography.bodyFontFamily,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                    const SizedBox(width: 8),
-
-                    // Title block
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            subtitle,
-                            style: AppTypography.monoLabelSmall.copyWith(
-                              color: Colors.white.withValues(alpha: 0.5),
-                              fontSize: 10,
-                              letterSpacing: 0.1 * kEm,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontFamily: AppTypography.bodyFontFamily,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
 
-              // ── Right side action ────────────────────────────────
-              ?rightAction,
-            ],
+                // ── Right side action ────────────────────────────────
+                ?rightAction,
+              ],
+            ),
           ),
         ),
       ),

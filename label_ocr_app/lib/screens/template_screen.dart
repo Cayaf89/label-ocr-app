@@ -210,7 +210,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
                                 ),
                                 style: const TextStyle(
                                   fontFamily: AppTypography.bodyFontFamily,
-                                  fontSize: 14,
+                                  fontSize: 15,
                                 ),
                               ),
                             ),
@@ -264,7 +264,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
                           ),
                           style: const TextStyle(
                             fontFamily: AppTypography.bodyFontFamily,
-                            fontSize: 14,
+                            fontSize: 15,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.gapLarge),
@@ -290,10 +290,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
   }
 
   Widget _buildSectionLabel(String label) {
-    return Text(
-      label,
-      style: AppTypography.sectionHeader(context).copyWith(fontSize: 10),
-    );
+    return Text(label, style: AppTypography.sectionHeader(context));
   }
 
   Widget _buildImageZone() {
@@ -342,7 +339,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
                             child: Text(
                               field.apiField.split('.').last,
                               style: const TextStyle(
-                                fontSize: 7,
+                                fontSize: 9,
                                 color: Colors.white,
                               ),
                             ),
@@ -367,7 +364,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
                       ),
                       child: const Text(
                         'Changer',
-                        style: TextStyle(fontSize: 9, color: Colors.white),
+                        style: TextStyle(fontSize: 11, color: Colors.white),
                       ),
                     ),
                   ),
@@ -397,7 +394,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
                           Text(
                             '$_detectionCount zones d\u00e9tect\u00e9es',
                             style: const TextStyle(
-                              fontSize: 9,
+                              fontSize: 11,
                               color: Colors.white,
                             ),
                           ),
@@ -428,7 +425,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
                     const Text(
                       'Photographier une \u00e9tiquette',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                         fontFamily: AppTypography.bodyFontFamily,
                       ),
@@ -437,7 +434,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
                     const Text(
                       'L\'OCR d\u00e9tectera automatiquement les textes',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         color: AppColors.mutedForegroundLight,
                       ),
                     ),
@@ -453,7 +450,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
       children: [
         Text(
           'Textes d\u00e9tect\u00e9s \u2192 Champs API',
-          style: AppTypography.sectionHeader(context).copyWith(fontSize: 10),
+          style: AppTypography.sectionHeader(context),
         ),
         const Expanded(child: Divider(color: AppColors.borderLight, height: 1)),
         Container(
@@ -538,7 +535,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
                             ? Text(
                                 detectedText.text,
                                 style: const TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w500,
                                   fontFamily: AppTypography.monoFontFamily,
                                 ),
@@ -546,7 +543,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
                             : const Text(
                                 'Aucun texte d\u00e9tect\u00e9 \u00e0 cette position',
                                 style: TextStyle(
-                                  fontSize: 9,
+                                  fontSize: 11,
                                   color: AppColors.mutedForegroundLight,
                                   fontStyle: FontStyle.italic,
                                 ),
@@ -686,7 +683,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
                   Text(
                     _saveSuccess ? 'Sauvegard\u00e9' : 'Enregistrer',
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       fontFamily: AppTypography.bodyFontFamily,
                       color: Colors.white,

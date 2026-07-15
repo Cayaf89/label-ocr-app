@@ -206,48 +206,50 @@ class _ScanScreenState extends State<ScanScreen>
 
   Widget _buildAppBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       color: const Color(0xFF111218),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Padding(
-              padding: const EdgeInsets.only(left: -4.0),
-              child: Icon(
-                Icons.arrow_back,
-                size: 18,
-                color: Colors.white.withValues(alpha: 0.6),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () => context.pop(),
+                child: const Padding(
+                  padding: EdgeInsets.only(left: -4.0),
+                  child: Icon(Icons.arrow_back, size: 18, color: Colors.white),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'OCR Mapper',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontFamily: AppTypography.monoFontFamily,
-                    color: Colors.white.withValues(alpha: 0.5),
-                  ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'OCR Mapper',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontFamily: AppTypography.monoFontFamily,
+                        color: Colors.white.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      "Scanner une \u00e9tiquette",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: AppTypography.bodyFontFamily,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                const Text(
-                  "Scanner une \u00e9tiquette",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: AppTypography.bodyFontFamily,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -305,7 +307,7 @@ class _ScanScreenState extends State<ScanScreen>
                             child: Text(
                               field.split('.').last,
                               style: const TextStyle(
-                                fontSize: 7,
+                                fontSize: 9,
                                 color: Colors.white,
                               ),
                             ),
@@ -342,7 +344,7 @@ class _ScanScreenState extends State<ScanScreen>
                       Text(
                         '${_fieldValues.values.where((v) => v != null).length} champs reconnus',
                         style: const TextStyle(
-                          fontSize: 9,
+                          fontSize: 11,
                           color: Colors.white,
                         ),
                       ),
@@ -386,7 +388,7 @@ class _ScanScreenState extends State<ScanScreen>
                 Text(
                   'Analyse en cours...',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontFamily: AppTypography.monoFontFamily,
                     color: Colors.white.withValues(alpha: 0.6),
                   ),
@@ -425,7 +427,7 @@ class _ScanScreenState extends State<ScanScreen>
                 Text(
                   'Appuyez sur le bouton ci-dessous pour ouvrir la cam\u00e9ra.',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontFamily: AppTypography.monoFontFamily,
                     color: Colors.white.withValues(alpha: 0.5),
                   ),
@@ -590,7 +592,7 @@ class _ScanScreenState extends State<ScanScreen>
               Text(
                 'Prendre une photo',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
                   fontFamily: AppTypography.bodyFontFamily,
                 ),
@@ -617,7 +619,7 @@ class _ScanScreenState extends State<ScanScreen>
               Text(
                 'Rescanner',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.w500,
                   fontFamily: AppTypography.bodyFontFamily,
                 ),
@@ -635,7 +637,7 @@ class _ScanScreenState extends State<ScanScreen>
       children: [
         Text(
           'Donn\u00e9es extraites',
-          style: AppTypography.sectionHeader(context).copyWith(fontSize: 10),
+          style: AppTypography.sectionHeader(context),
         ),
         const Expanded(child: Divider(color: AppColors.borderLight, height: 1)),
       ],
@@ -690,7 +692,7 @@ class _ScanScreenState extends State<ScanScreen>
                     child: Text(
                       region.text,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w500,
                         fontFamily: AppTypography.monoFontFamily,
                       ),
@@ -750,7 +752,7 @@ class _ScanScreenState extends State<ScanScreen>
               Text(
                 _isSending ? 'Envoi en cours...' : 'Envoyer',
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
                   fontFamily: AppTypography.bodyFontFamily,
                   color: Colors.white,

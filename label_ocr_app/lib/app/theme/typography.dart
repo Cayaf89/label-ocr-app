@@ -14,65 +14,65 @@ class AppTypography {
   // Type scale definitions
   static TextStyle get labelSmall => const TextStyle(
     fontFamily: monoFontFamily,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.1 * kEm,
   );
 
   static TextStyle get labelMedium => const TextStyle(
     fontFamily: monoFontFamily,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.1 * kEm,
   );
 
   static TextStyle get bodySmall => const TextStyle(
     fontFamily: bodyFontFamily,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w500,
   );
 
   static TextStyle get bodyMedium => const TextStyle(
     fontFamily: bodyFontFamily,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: FontWeight.w500,
   );
 
   static TextStyle get bodyMediumSemiBold => const TextStyle(
     fontFamily: bodyFontFamily,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: FontWeight.w600,
   );
 
   static TextStyle get headingSmall => const TextStyle(
     fontFamily: bodyFontFamily,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: FontWeight.w600,
   );
 
   // Monospace variants for technical data
   static TextStyle get monoLabelSmall => const TextStyle(
     fontFamily: monoFontFamily,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: FontWeight.w500,
   );
 
   static TextStyle get monoLabelMedium => const TextStyle(
     fontFamily: monoFontFamily,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: FontWeight.w500,
   );
 
   static TextStyle get monoBodySmall => const TextStyle(
     fontFamily: monoFontFamily,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: FontWeight.w400,
   );
 
   // Section header style (uppercase, tracking-widest)
   static TextStyle sectionHeader(BuildContext context) => const TextStyle(
     fontFamily: monoFontFamily,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.1 * kEm,
     color: AppColors.mutedForegroundLight,
@@ -81,7 +81,7 @@ class AppTypography {
   // Field name in headers style
   static TextStyle fieldNameHeader(BuildContext context) => TextStyle(
     fontFamily: monoFontFamily,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.08 * kEm,
     color: Theme.of(context).colorScheme.primary,
@@ -90,7 +90,7 @@ class AppTypography {
   // Detected text value style
   static TextStyle detectedValue(BuildContext context) => TextStyle(
     fontFamily: monoFontFamily,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: FontWeight.w500,
     color: Theme.of(context).colorScheme.onSurface,
   );
@@ -98,7 +98,7 @@ class AppTypography {
   // Coordinate display style
   static TextStyle coordinateDisplay(BuildContext context) => const TextStyle(
     fontFamily: monoFontFamily,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: FontWeight.w400,
     color: AppColors.mutedForegroundLight,
   );
@@ -106,7 +106,7 @@ class AppTypography {
   // Timestamp style
   static TextStyle timestampStyle(BuildContext context) => const TextStyle(
     fontFamily: monoFontFamily,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: FontWeight.w400,
     color: AppColors.mutedForegroundLight,
   );

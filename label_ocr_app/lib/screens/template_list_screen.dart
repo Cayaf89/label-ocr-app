@@ -133,7 +133,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                       'Cr\u00e9er un nouveau template',
                       style: TextStyle(
                         fontFamily: AppTypography.bodyFontFamily,
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w500,
                         color: AppColors.mutedForegroundLight,
                       ),
@@ -160,13 +160,13 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.add, size: 12, color: Colors.white),
+            Icon(Icons.add, size: 16, color: Colors.white),
             SizedBox(width: 4),
             Text(
               'Nouveau',
               style: TextStyle(
                 fontFamily: AppTypography.bodyFontFamily,
-                fontSize: 12,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
@@ -243,7 +243,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                       child: Center(
                         child: Text(
                           template.icon,
-                          style: const TextStyle(fontSize: 18),
+                          style: const TextStyle(fontSize: 20),
                         ),
                       ),
                     ),
@@ -256,7 +256,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                             template.name,
                             style: const TextStyle(
                               fontFamily: AppTypography.bodyFontFamily,
-                              fontSize: 14,
+                              fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: AppColors.foregroundLight,
                               overflow: TextOverflow.ellipsis,
@@ -268,7 +268,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                             template.description,
                             style: const TextStyle(
                               fontFamily: AppTypography.bodyFontFamily,
-                              fontSize: 10,
+                              fontSize: 11,
                               color: AppColors.mutedForegroundLight,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -292,7 +292,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                         '${template.fieldsCount} champs',
                         style: const TextStyle(
                           fontFamily: AppTypography.monoFontFamily,
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.w500,
                           color: Colors.white,
                         ),
@@ -326,7 +326,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                                   : 'Jamais utilis\u00e9',
                               style: const TextStyle(
                                 fontFamily: AppTypography.monoFontFamily,
-                                fontSize: 9,
+                                fontSize: 11,
                                 color: AppColors.mutedForegroundLight,
                               ),
                             ),
@@ -382,7 +382,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                                     'Scan',
                                     style: TextStyle(
                                       fontFamily: AppTypography.bodyFontFamily,
-                                      fontSize: 12,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.w500,
                                       color: Colors.white,
                                     ),
